@@ -19,11 +19,11 @@ const router = new Router({
       name: 'Investigate',
       component: () =>
         import(/* webpackChunkName: "investigate" */ '@/views/Investigate/Index'),
-    },
-    {
-      path: '/scrap',
-      name: 'Scrap',
-      component: () =>
+      },
+      {
+        path: '/scrap',
+        name: 'Scrap',
+        component: () =>
         import(/* webpackChunkName: "scrap" */ '@/views/Scrap/Index'),
     },
     {
@@ -39,10 +39,52 @@ const router = new Router({
         import(/* webpackChunkName: "donate" */ '@/views/Donate/Index'),
     },
     {
+      path: '/donate/sno',
+      name: 'Donate',
+      component: () =>
+        import(/* webpackChunkName: "donate" */ '@/views/Donate/Index'),
+    },
+    {
+      path: '/donate/fpwh',
+      name: 'Donate',
+      component: () =>
+        import(/* webpackChunkName: "donate" */ '@/views/Donate/PendingFpwh/Index'),
+    },
+    {
+      path: '/donate/pe',
+      name: 'Donate',
+      component: () =>
+        import(/* webpackChunkName: "donate" */ '@/views/Donate/PendingPe/Index'),
+    },
+    {
       path: '/return',
       name: 'Return',
       component: () =>
         import(/* webpackChunkName: "return" */ '@/views/Return/Index'),
+    },
+    {
+      path: '/return/mpd',
+      name: 'Return',
+      component: () =>
+        import(/* webpackChunkName: "return" */ '@/views/Return/Index'),
+    },
+    {
+      path: '/return/ops',
+      name: 'Return',
+      component: () =>
+        import(/* webpackChunkName: "return" */ '@/views/Return/PendingOps/Index'),
+    },
+    {
+      path: '/return/dbs',
+      name: 'Return',
+      component: () =>
+        import(/* webpackChunkName: "return" */ '@/views/Return/PendingDbs/Index'),
+    },
+    {
+      path: '/return/pe',
+      name: 'Return',
+      component: () =>
+        import(/* webpackChunkName: "return" */ '@/views/Return/PendingPe/Index'),
     },
     {
       path: '/release',
@@ -55,6 +97,18 @@ const router = new Router({
       name: 'Unpickable',
       component: () =>
         import(/* webpackChunkName: "unpickable" */ '@/views/Unpickable/Index'),
+    },
+    {
+      path: '/unpickable/unpickable',
+      name: 'Unpickable',
+      component: () =>
+        import(/* webpackChunkName: "unpickable" */ '@/views/Unpickable/Index'),
+    },
+    {
+      path: '/unpickable/reconcile',
+      name: 'Unpickable',
+      component: () =>
+        import(/* webpackChunkName: "unpickable" */ '@/views/Unpickable/PendingReconcile/Index'),
     },
   ],
 })

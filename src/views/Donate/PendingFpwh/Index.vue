@@ -18,47 +18,36 @@
             v-model="tab"
             color="primary"
           >
-            <v-tab>
+            <v-tab to="/donate/sno">
               <v-card
                 ripple
+                to="/donate/sno"
               >
                 <v-card-title class="text-center">
-                  Pending
+                  SNO
                 </v-card-title>
-                <v-card-subtitle>MPD</v-card-subtitle>
+                <v-card-subtitle />
               </v-card>
             </v-tab>
             <v-tab>
               <v-card
                 ripple
-                to="/return/ops"
               >
                 <v-card-title class="text-center">
-                  Pending
+                  FPWH
                 </v-card-title>
-                <v-card-subtitle>OP SPOC</v-card-subtitle>
+                <v-card-subtitle />
               </v-card>
             </v-tab>
-            <v-tab to="/return/dbs">
+            <v-tab to="/donate/pe">
               <v-card
                 ripple
-                to="/return/dbs"
-              >
-                <v-card-title class="text-center">
-                  DBS
-                </v-card-title>
-                <v-card-subtitle>Actions Needed</v-card-subtitle>
-              </v-card>
-            </v-tab>
-            <v-tab to="/return/pe">
-              <v-card
-                ripple
-                to="/return/pe"
+                to="/donate/pe"
               >
                 <v-card-title class="text-center">
                   SAP PE
                 </v-card-title>
-                <v-card-subtitle>Actions Needed</v-card-subtitle>
+                <v-card-subtitle />
               </v-card>
             </v-tab>
             <v-menu
@@ -97,11 +86,9 @@
               </v-list>
             </v-menu>
             <v-spacer />
-
-            <bucket-change
-              v-if="false"
-              :selected-rows="selectedRowsData"
-            />
+            <v-tab-item>
+              <v-spacer />
+            </v-tab-item>
             <v-tab-item active>
               <v-container fluid>
                 <div width="100%">
@@ -160,7 +147,7 @@
                     <dx-state-storing
                       :enabled="true"
                       type="localStorage"
-                      storage-key="return-mpd"
+                      storage-key="donate-fpwh"
                     />
                     <dx-editing
                       :start-edit-action="'dblClick'"
@@ -205,6 +192,16 @@
                       :visible="false"
                     />
                     <dx-column
+                      data-field="category"
+                      :visible="false"
+                    >
+                      <dx-lookup
+                        :data-source="npiBuckets"
+                        value-expr="id"
+                        display-expr="bucket"
+                      />
+                    </dx-column>
+                    <dx-column
                       caption="Blocked Date"
                       data-field="Created"
                       data-type="date"
@@ -224,14 +221,6 @@
                     <dx-column
                       caption="Days Pending Execution"
                       data-field="days_in_bucket"
-                      cell-template="DaysCell"
-                      data-type="number"
-                      :allow-editing="false"
-                      :width="95"
-                    />
-                    <dx-column
-                      caption="Days Pending RTV"
-                      data-field="days_pen_exe"
                       cell-template="DaysCell"
                       data-type="number"
                       :allow-editing="false"
@@ -266,9 +255,10 @@
                     <dx-column
                       data-field="buom"
                       :allow-editing="false"
-                      caption="Base Stock"
+                      caption="Buom Stock"
                       :visible="true"
                       width="133"
+                      data-type="number"
                     />
                     <dx-column
                       data-field="buomName"
@@ -278,15 +268,15 @@
                     />
                     <dx-column
                       data-field="stdPallet"
-                      caption="Pallet Qty"
-                      :visible="false"
+                      caption="Pallets"
+                      :visible="true"
                       :allow-editing="false"
                       width="80"
                     />
                     <dx-column
                       data-field="returnPalletQty"
                       caption="Pallet Qty RTCIS"
-                      :visible="true"
+                      :visible="false"
                       :allow-editing="false"
                       width="80"
                     />
@@ -345,52 +335,19 @@
                       data-field="actionNote"
                       :visible="false"
                     />
-                    <dx-column
-                      data-field="reworkProtocolComplete"
-                      caption="Rework Protocol Status"
-                      :width="112"
-                      :visible="false"
-                    >
-                      <dx-lookup
-                        :data-source="[{id:null,name:''},{id:'1',name:'No'},{id:'2',name:'Yes'}]"
-                        value-expr="id"
-                        display-expr="name"
-                      />
-                    </dx-column>
+
                     <dx-column
                       data-field="subBucketID"
                       caption="Sub Bucket"
                       :visible="false"
                     >
                       <dx-lookup
-                        :data-source="[{id:null,name:'MPD'},{id:'ops',name:'Op Spoc'},{id:'dbs',name:'DBS'},{id:'sap',name:'SAP PE'}]"
+                        :data-source="[{id:null,name:'SNO'},{id:'fpwh',name:'FPWH'},{id:'pe',name:'SAP PE'}]"
                         value-expr="id"
                         display-expr="name"
                       />
                     </dx-column>
-                    <dx-column
-                      data-field="reworkTypeId"
-                      caption="Type"
-                      :visible="false"
-                    >
-                      <dx-lookup
-                        :data-source="[{id:null,name:''},{id:'1',name:'Rework'},{id:'2',name:'Retest'},{id:'3',name:'Consolidation'}]"
-                        value-expr="id"
-                        display-expr="name"
-                      />
-                    </dx-column>
-                    <dx-column
-                      data-field="reworkPalletOrder"
-                      caption="Pallet Order Date"
-                      data-type="date"
-                      :visible="false"
-                    />
-                    <dx-column
-                      data-field="reworkPalletArrive"
-                      caption="Pallet Arrival Date"
-                      data-type="date"
-                      :visible="false"
-                    />
+
                     <dx-column
                       data-field="storageLocation"
                       caption="Storage Location"
@@ -399,56 +356,25 @@
                       :width="100"
                     />
                     <dx-column
-                      data-field="returnPalletInformation"
-                      caption="ULID Information"
+                      data-field="donateStatus"
+                      caption="Donation Status"
                       :visible="true"
-                      :allow-editing="false"
-                    />
+                    >
+                      <dx-lookup
+                        :data-source="[{id:null,name:'QA Approved'},{id:'2',name:'Pickup Coordinated'},{id:'3',name:'Pickup Complete'}]"
+                        value-expr="id"
+                        display-expr="name"
+                      />
+                    </dx-column>
+
                     <dx-column
-                      data-field="returnPickUpDate"
-                      caption="Pick-up Date"
-                      data-type="date"
-                      :visible="false"
-                    />
-                    <dx-column
-                      data-field="returnVendorLot"
-                      caption="Vendor Lot #"
-                      :visible="true"
-                      :allow-editing="false"
-                    />
-                    <dx-column
-                      data-field="returnRecBOL"
-                      caption="Receiving BOL #"
-                      :visible="true"
-                    />
-                    <dx-column
-                      data-field="returnBOL"
-                      caption="BOL #"
-                      :visible="false"
-                    />
-                    <dx-column
-                      data-field="returnRMA"
-                      caption="RMA #"
-                      :visible="true"
-                    />
-                    <dx-column
-                      data-field="returnVendorContact"
-                      caption="Vendor Contact"
-                      :visible="true"
-                    />
-                    <dx-column
-                      data-field="returnWeight"
-                      caption="Weight"
-                      :visible="false"
-                    />
-                    <dx-column
-                      data-field="category"
+                      data-field="donatePickup"
                       :visible="false"
                     >
                       <dx-lookup
-                        :data-source="npiBuckets"
+                        :data-source="[{id:null,name:'No'},{id:'yes',name:'Yes'}]"
                         value-expr="id"
-                        display-expr="bucket"
+                        display-expr="name"
                       />
                     </dx-column>
                     <dx-column
@@ -538,7 +464,7 @@
   import ExcelJS from 'exceljs'
   import saveAs from 'file-saver'
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
-  import DaysCell from '../../components/core/Days'
+  import DaysCell from '../../../components/core/Days'
   import query from 'devextreme/data/query'
   const MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24
   export default {
@@ -565,12 +491,11 @@
       DaysCell,
       Toast: () => import('@/components/core/Toast'),
       EditForm: () => import('./EditForm'),
-      BucketChange: () => import('./BucketChange'),
     },
 
     data () {
       return {
-        tab: 0,
+        tab: 1,
         popupVisible: false,
         isPhoneVisible: true,
         Quality_Notes: null,
@@ -742,9 +667,9 @@
       },
       Base_filter () {
         const response = []
-        response.push(['bucketID', '=', '5']) // Base Filter
+        response.push(['bucketID', '=', '4']) // Base Filter
         response.push('and')
-        response.push(['subBucketID', 'noneof', ['ops', 'dbs', 'sap']])
+        response.push(['subBucketID', '=', 'fpwh'])
         // IF Category Filter is applied
         if (this.Category) {
           response.push('and')
@@ -821,7 +746,7 @@
           options: {
             icon: 'clearformat',
             onClick: function () {
-              localStorage.removeItem('return-mpd')
+              localStorage.removeItem('donate-fpwh')
               window.location.reload()
             },
             hint: 'Clear Saved Filter',

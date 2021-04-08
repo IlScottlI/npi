@@ -18,9 +18,10 @@
             v-model="tab"
             color="primary"
           >
-            <v-tab>
+            <v-tab to="/return/mpd">
               <v-card
                 ripple
+                to="/return/mpd"
               >
                 <v-card-title class="text-center">
                   Pending
@@ -31,7 +32,6 @@
             <v-tab>
               <v-card
                 ripple
-                to="/return/ops"
               >
                 <v-card-title class="text-center">
                   Pending
@@ -97,11 +97,9 @@
               </v-list>
             </v-menu>
             <v-spacer />
-
-            <bucket-change
-              v-if="false"
-              :selected-rows="selectedRowsData"
-            />
+            <v-tab-item>
+              <v-spacer />
+            </v-tab-item>
             <v-tab-item active>
               <v-container fluid>
                 <div width="100%">
@@ -160,7 +158,7 @@
                     <dx-state-storing
                       :enabled="true"
                       type="localStorage"
-                      storage-key="return-mpd"
+                      storage-key="return-ops-spoc"
                     />
                     <dx-editing
                       :start-edit-action="'dblClick'"
@@ -266,7 +264,7 @@
                     <dx-column
                       data-field="buom"
                       :allow-editing="false"
-                      caption="Base Stock"
+                      caption="Buom Stock"
                       :visible="true"
                       width="133"
                     />
@@ -278,7 +276,7 @@
                     />
                     <dx-column
                       data-field="stdPallet"
-                      caption="Pallet Qty"
+                      caption="Pallets"
                       :visible="false"
                       :allow-editing="false"
                       width="80"
@@ -422,13 +420,19 @@
                       :visible="true"
                     />
                     <dx-column
-                      data-field="returnBOL"
-                      caption="BOL #"
-                      :visible="false"
-                    />
-                    <dx-column
                       data-field="returnRMA"
                       caption="RMA #"
+                      :visible="true"
+                    />
+                    <dx-column
+                      data-field="returnBOL"
+                      caption="BOL #"
+                      :visible="true"
+                    />
+                    <dx-column
+                      data-field="returnPickupDate"
+                      caption="Pick Up Date"
+                      data-type="date"
                       :visible="true"
                     />
                     <dx-column
@@ -538,7 +542,7 @@
   import ExcelJS from 'exceljs'
   import saveAs from 'file-saver'
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
-  import DaysCell from '../../components/core/Days'
+  import DaysCell from '../../../components/core/Days'
   import query from 'devextreme/data/query'
   const MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24
   export default {
@@ -565,12 +569,11 @@
       DaysCell,
       Toast: () => import('@/components/core/Toast'),
       EditForm: () => import('./EditForm'),
-      BucketChange: () => import('./BucketChange'),
     },
 
     data () {
       return {
-        tab: 0,
+        tab: 1,
         popupVisible: false,
         isPhoneVisible: true,
         Quality_Notes: null,
@@ -744,7 +747,7 @@
         const response = []
         response.push(['bucketID', '=', '5']) // Base Filter
         response.push('and')
-        response.push(['subBucketID', 'noneof', ['ops', 'dbs', 'sap']])
+        response.push(['subBucketID', '=', 'ops'])
         // IF Category Filter is applied
         if (this.Category) {
           response.push('and')
@@ -821,7 +824,7 @@
           options: {
             icon: 'clearformat',
             onClick: function () {
-              localStorage.removeItem('return-mpd')
+              localStorage.removeItem('return-ops-spoc')
               window.location.reload()
             },
             hint: 'Clear Saved Filter',

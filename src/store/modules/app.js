@@ -17,9 +17,10 @@ export default {
     drawer: null,
     bucketDialog: null,
     selectedItem: {},
-    dialogCLose: null,
+    dialog: null,
     closePopup: null,
     viewToast: false,
+    selectedRowsData: [],
     toastOptions: { text: 'Update Success', type: 'success', time: 1000 },
     buckets: [
       { ID: '1', Name: 'Investigate' },
@@ -31,6 +32,27 @@ export default {
       { ID: '7', Name: 'Unpickable' },
     ],
     scrapTypes: ['', 'Heritage', 'Awesome'],
+    selectedRowObject: {},
+    oldValues: {},
+    pager: 'pager',
+    pageSizes: [5, 10, 20, 100],
+    editButtons: ['edit'],
+    filterBuilderPopupPosition: {
+      of: window,
+      at: 'top',
+      my: 'top',
+      offset: { y: 10 },
+    },
+    activeTab: 0,
+    zoomLevel: localStorage.getItem('zoomLevel'),
+    pendingSteamGrid: () => {},
+    pendingApprovalGrid: () => {},
+  },
+
+  getters: {
+    zoomLevel: (state, getters, rootState, rootGetters, actions) => {
+      return localStorage.getItem('zoomLevel')
+    },
   },
 
   mutations: {
@@ -38,8 +60,16 @@ export default {
     toggleDrawer: toggle('drawer'),
     toggleBucketDialog: toggle('bucketDialog'),
     setSelectedItem: set('selectedItem'),
-    setdialogCLose: set('dialogCLose'),
+    setDialog: set('dialog'),
     setViewToast: set('viewToast'),
     setToastOptions: set('toastOptions'),
+    setSelectedRowsData: set('selectedRowsData'),
+    setSelectedRowObject: set('selectedRowObject'),
+    setOldValues: set('oldValues'),
+    setPager: set('pager'),
+    setActiveTab: set('activeTab'),
+    setZoomLevel: set('zoomLevel'),
+    setPendingSteamGrid: set('pendingSteamGrid'),
+    setPendingApprovalGrid: set('pendingApprovalGrid'),
   },
 }

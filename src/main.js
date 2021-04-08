@@ -17,7 +17,11 @@ import XlsxDownload from 'vue-xlsx/dist/components/XlsxDownload'
 
 // Added direct style import to fix style load error
 import 'devextreme/dist/css/dx.common.css'
-import 'devextreme/dist/css/dx.light.css'
+import 'devextreme/dist/css/dx.material.blue.light.compact.css'
+import VueObserveVisibility from 'vue-observe-visibility'
+
+import VueFileAgent from 'vue-file-agent'
+import VueFileAgentStyles from 'vue-file-agent/dist/vue-file-agent.css'
 
 import {
   DxDataGrid,
@@ -53,3 +57,7 @@ new Vue({
 
 Vue.use(VueCookies)
 Vue.use(VueMoment)
+Vue.use(VueObserveVisibility)
+
+Vue.use(VueFileAgent)
+Vue.use(VueFileAgentStyles)

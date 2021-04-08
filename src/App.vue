@@ -1,3 +1,5 @@
+
+/* eslint-disable vue/valid-v-model */
 <template>
   <v-app>
     <v-app-bar
@@ -64,19 +66,36 @@
         disable-lookup
       />
       <v-spacer />
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            v-bind="attrs"
+            icon
+            v-on="on"
+            @click="
+              getNPIData();
+              getNPIMaster();
+            "
+          >
+            <v-icon>mdi-reload</v-icon>
+          </v-btn>
+        </template>
+        <span>Reloads Data</span>
+      </v-tooltip>
 
-      <v-btn icon>
-        <v-icon>mdi-magnify</v-icon>
-      </v-btn>
-      <v-btn
-        icon
-        @click="
-          getNPIData();
-          getNPIMaster();
-        "
-      >
-        <v-icon>mdi-reload</v-icon>
-      </v-btn>
+      <v-tooltip bottom>
+        <template v-slot:activator="{ on, attrs }">
+          <v-btn
+            v-bind="attrs"
+            icon
+            v-on="on"
+            @click="clearAll()"
+          >
+            <v-icon>mdi-eraser</v-icon>
+          </v-btn>
+        </template>
+        <span>Clear all stored preference</span>
+      </v-tooltip>
 
       <template v-slot:extension>
         <v-btn
@@ -89,6 +108,7 @@
         >
           {{ text }}
         </v-btn>
+        <v-spacer />
       </template>
     </v-app-bar>
 
@@ -111,17 +131,28 @@
     data () {
       return {
         tab: null,
+        fab: false,
+        hidden: false,
+        tabs: null,
       }
     },
 
     metaInfo: {
-      titleTemplate: '%s | NPI Tool',
+      titleTemplate: 'NPI Tool',
     },
 
     computed: {
       ...mapState('app', ['links']),
       ...mapState('npi', ['Action', 'Material', 'Bucket', 'npiBuckets']),
       ...mapGetters('npi', ['categories', 'materials']),
+      activeFab () {
+        switch (this.tabs) {
+          case 'one': return { color: 'success', icon: 'mdi-share-variant' }
+          case 'two': return { color: 'red', icon: 'mdi-pencil' }
+          case 'three': return { color: 'green', icon: 'mdi-chevron-up' }
+          default: return { color: 'primary', icon: 'mdi-chevron-up' }
+        }
+      },
       Category: {
         get () {
           return this.$store.state.npi.Category
@@ -140,6 +171,22 @@
           // this.setCategory(value)
           this.setMaterial(value)
           this.setAction(null)
+        },
+      },
+      zoomLevel: {
+        get () {
+          if (localStorage.getItem('zoomLevel')) {
+            document.getElementsByTagName('html')[0].style.zoom = this.$store.state.app.zoomLevel + '%'
+            return this.$store.state.app.zoomLevel
+          } else {
+            localStorage.setItem('zoomLevel', 100)
+            return 100
+          }
+        },
+        set (value) {
+          this.setZoomLevel(value)
+          localStorage.setItem('zoomLevel', parseInt(value))
+          document.getElementsByTagName('html')[0].style.zoom = `${value}%`
         },
       },
       CategoryBucket: {
@@ -180,12 +227,17 @@
         'setAction',
         'setCategoryBucket',
       ]),
+      ...mapMutations('app', ['setZoomLevel']),
       ...mapActions('npi', [
         'getNPIData',
         'getNPIConfigData',
         'getNPIBUs',
         'getNPIMaster',
       ]),
+      clearAll () {
+        localStorage.clear()
+        window.location = ''
+      },
     },
   }
 </script>
@@ -197,4 +249,9 @@
 #hero h1 {
   letter-spacing: 4px !important;
 }
+  #lateral .v-btn--example {
+    bottom: 0;
+    position: absolute;
+    margin: 0rem 0rem 0 0 ;
+  }
 </style>

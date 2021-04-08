@@ -1,3 +1,4 @@
+
 <template>
   <section id="scrap">
     <v-card
@@ -13,12 +14,29 @@
     <v-card v-if="!loading">
       <v-container fluid>
         <v-card>
-          <v-tabs color="primary">
+          <v-tabs
+            v-model="tab"
+            color="primary"
+          >
             <v-tab>
-              <v-card ripple>
+              <v-card
+                ripple
+              >
                 <v-card-title class="text-center">
                   Unpickable
                 </v-card-title>
+                <v-card-subtitle />
+              </v-card>
+            </v-tab>
+            <v-tab to="/unpickable/reconcile">
+              <v-card
+                ripple
+                to="/unpickable/reconcile"
+              >
+                <v-card-title class="text-center">
+                  Reconcile
+                </v-card-title>
+                <v-card-subtitle />
               </v-card>
             </v-tab>
             <v-menu
@@ -37,23 +55,37 @@
 
               <v-list>
                 <v-list-item
-                  v-for="(item, i) in ['virtual', 'pager']"
-                  :key="i"
                   v-model="pager"
                 >
-                  <v-btn @click="pager = item">
-                    <v-list-item-title>{{ item }}</v-list-item-title>
+                  <v-btn
+                    :dark="pager === 'virtual'"
+                    @click="pager = 'virtual'"
+                  >
+                    <v-list-item-title>Virtual</v-list-item-title>
+                  </v-btn>
+                </v-list-item>
+                <v-list-item>
+                  <v-btn
+                    :dark="pager === 'pager'"
+                    @click="pager = 'pager'"
+                  >
+                    <v-list-item-title>Pager</v-list-item-title>
                   </v-btn>
                 </v-list-item>
               </v-list>
             </v-menu>
-            <!-- Pending Steam Tab -->
-            <v-tab-item>
+            <v-spacer />
+
+            <bucket-change
+              v-if="false"
+              :selected-rows="selectedRowsData"
+            />
+            <v-tab-item active>
               <v-container fluid>
                 <div width="100%">
                   <dx-data-grid
                     id="gridContainer"
-                    ref="gridContainerTest"
+                    ref="gridContainerInvestigate"
                     width="100%"
                     overflow="scroll"
                     :data-source="npiData"
@@ -61,19 +93,23 @@
                     :show-row-lines="false"
                     :show-borders="false"
                     :row-alternation-enabled="true"
-                    :focused-row-enabled="true"
+                    :focused-row-enabled="false"
                     :key-expr="'id'"
+                    :remote-operations="true"
                     :allow-column-reordering="true"
-                    :filter-value="Unpickable_filter"
+                    :filter-value="Base_filter"
                     :allow-column-resizing="true"
                     :on-initialized="onInitialized"
                     :repaint-changes-only="true"
                     :highlight-changes="true"
-                    column-resizing-mode="widget"
+                    :column-resizing-mode="'widget'"
+                    :hover-state-enabled="true"
+                    :column-hiding-enabled="true"
+                    :column-auto-width="true"
                     @exporting="onExporting"
-                    @row-updating="updateEvent"
-                    @selection-changed="onSelectionChanged"
-                    @editing-start="setSelectedItem"
+                    @row-updating="rowUpdatingEcho"
+                    @editing-start="editingStartEcho"
+                    @toolbar-preparing="onToolbarPreparing"
                   >
                     <dx-paging />
                     <dx-pager
@@ -85,221 +121,187 @@
                     <dx-filter-panel :visible="true" />
                     <dx-filter-builder-popup />
                     <dx-header-filter :visible="true" />
-                    <dx-scrolling column-rendering-mode="virtual" />
+                    <dx-scrolling
+                      column-rendering-mode="virtual"
+                      :mode="pager"
+                    />
                     <dx-group-panel :visible="true" />
                     <dx-grouping :auto-expand-all="true" />
                     <dx-export
                       :enabled="true"
                       :allow-export-selected-data="true"
                     />
+                    <dx-selection
+                      :deferred="false"
+                      mode="single"
+                    />
+                    <dx-state-storing
+                      :enabled="true"
+                      type="localStorage"
+                      storage-key="unpickable"
+                    />
                     <dx-editing
+                      :start-edit-action="'dblClick'"
+                      refresh-mode="repaint"
+                      mode="batch"
                       :allow-updating="true"
-                      :use-icons="true"
-                      mode="popup"
-                    >
-                      <dx-popup
-                        :show-title="true"
-                        :title="'Details'"
-                        max-width="80%"
-                        max-height="80%"
-                        :visible="this.$store.state.app.dialogCLose"
-                      >
-                        <dx-position
-                          my="center"
-                          at="center"
-                          of="#form"
-                        />
-                      </dx-popup>
-                      <dx-form>
-                        <dx-item
-                          :col-count="4"
-                          :col-span="2"
-                          item-type="group"
-                          caption="NPI Data"
-                        >
-                          <dx-item
-                            data-field="material"
-                            caption="GCAS"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="batchNumber"
-                            caption="Batch"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="buom"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="storageLocation"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            :col-span="2"
-                            data-field="materialDescription"
-                            caption="Description"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="materialType"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="processOrder"
-                            :disabled="true"
-                          />
-                          <dx-item data-field="steamNumber" />
-                          <dx-item
-                            data-field="hierarchyCategory"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="subSector"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            data-field="dispositionDeadline"
-                            :col-span="2"
-                            :disabled="true"
-                          />
-                          <dx-item
-                            :col-span="2"
-                            :editor-options="{ height: 100 }"
-                            :visible="false"
-                            data-field="actionNote"
-                            editor-type="dxTextArea"
-                          />
-                          <dx-item
-                            :col-span="2"
-                            :editor-options="{ height: 100 }"
-                            data-field="comments"
-                            editor-type="dxTextArea"
-                          />
-                          <dx-item
-                            :col-span="4"
-                            :editor-options="{ height: 100 }"
-                            data-field="QANotes"
-                            editor-type="dxTextArea"
-                          >
-                            <dx-text-area />
-                          </dx-item>
-                          <dx-item data-field="legalEntity" />
-                          <dx-item
-                            data-field="bucketID"
-                            :editor-options="bucketOptions"
-                          >
-                            <dx-lookup
-                              :data-source="buckets"
-                              value-expr="ID"
-                              display-expr="Name"
-                            />
-                          </dx-item>
-                        </dx-item>
-                      </dx-form>
-                    </dx-editing>
+                    />
                     <dx-column-chooser
                       v-model="columns"
                       :enabled="true"
                     />
                     <dx-column
-                      caption="Hidden"
                       :visible="false"
-                    >
-                      <dx-column
-                        :visible="false"
-                        data-field="id"
-                        caption="NPI ID"
-                      />
-                      <dx-column
-                        :visable="false"
-                        data-field="materialType"
-                      />
-                      <dx-column
-                        :visable="false"
-                        data-field="hierarchyCategory"
-                      />
-                      <dx-column
-                        :visable="false"
-                        data-field="subSector"
-                      />
-                      <dx-column
-                        caption="NPI #"
-                        data-field="npiNumber"
-                        :visible="false"
-                      />
-                      <dx-column
-                        caption="Steam Number"
-                        data-field="steamNumber"
-                        :visible="false"
-                      />
-                    </dx-column>
-                    <dx-column
-                      caption="Days"
-                      data-field="days_in_bucket"
-                      width="80"
-                      :fixed="true"
-                      cell-template="DaysCell"
+                      data-field="id"
+                      caption="NPI ID"
+                      :allow-editing="false"
                     />
                     <dx-column
-                      data-field="dispositionDeadline"
+                      :visible="false"
+                      data-field="materialType"
+                      :allow-editing="false"
+                    />
+                    <dx-column
+                      data-field="hierarchyCategory"
+                      :visible="false"
+                      :allow-editing="false"
+                    />
+                    <dx-column
+                      data-field="subSector"
+                      :visible="false"
+                      :allow-editing="false"
+                    />
+                    <dx-column
+                      caption="NPI #"
+                      data-field="npiNumber"
+                      :visible="false"
+                      :allow-editing="false"
+                    />
+                    <dx-column
+                      caption="Steam Number"
+                      data-field="steamNumber"
+                      :visible="false"
+                    />
+                    <dx-column
+                      caption="Blocked Date"
+                      data-field="Created"
                       data-type="date"
+                      :allow-editing="false"
+                      :width="96"
+                      :visible="false"
+                    />
+                    <dx-column
+                      caption="Days Blocked"
+                      data-field="days_pending"
+                      cell-template="DaysCell"
+                      data-type="number"
+                      sort-order="desc"
+                      :allow-editing="false"
+                      :width="95"
+                    />
+                    <dx-column
+                      caption="Days Pending Execution"
+                      data-field="days_in_bucket"
+                      cell-template="DaysCell"
+                      data-type="number"
+                      :allow-editing="false"
+                      :width="95"
                     />
                     <dx-column
                       data-field="line"
                       caption="Line"
+                      :visible="false"
+                      :allow-editing="false"
                     />
                     <dx-column
                       data-field="processOrder"
+                      :visible="false"
+                      :allow-editing="false"
+                    />
+                    <dx-column
+                      data-field="unpickablePallets"
+                      :allow-editing="false"
+                      type="number"
+                      caption="ULID Count"
+                      :width="100"
                     />
                     <dx-column
                       data-field="material"
+                      :allow-editing="false"
                     />
                     <dx-column
                       data-field="batchNumber"
-                      caption="Batch Number"
+                      caption="Batch"
+                      :allow-editing="false"
                     />
                     <dx-column
                       data-field="materialDescription"
                       caption="Description"
+                      :width="140"
+                      :allow-editing="false"
                     />
                     <dx-column
                       data-field="buom"
-                      caption="Stock"
+                      :allow-editing="false"
+                      caption="Buom Stock"
+                      :visible="true"
+                      width="133"
+                      data-type="number"
                     />
                     <dx-column
                       data-field="buomName"
-                      caption=""
+                      :allow-editing="false"
+                      caption="UOM"
+                      :visible="true"
                     />
                     <dx-column
-                      data-field="storageLocation"
-                      caption="Loc"
+                      data-field="returnPalletQty"
+                      caption="Pallet Qty RTCIS"
                       :visible="false"
+                      :allow-editing="false"
+                      width="80"
                     />
                     <dx-column
                       data-field="stdPallet"
-                      caption="Qty"
+                      caption="Pallets"
                       :visible="true"
+                      :allow-editing="false"
+                      width="80"
                     />
                     <dx-column
                       data-field="localStock"
-                      caption="$"
                       format="currency"
+                      caption="Local Stock"
                       :visible="true"
+                      :allow-editing="false"
+                      width="100"
+                    />
+                    <dx-column
+                      data-field="storageLocation"
+                      caption="Storage Location"
+                      :visible="true"
+                      :allow-editing="false"
+                      :width="100"
                     />
                     <dx-column
                       data-field="QANotes"
                       caption="QA Notes"
                       :visible="true"
+                      :width="120"
                     />
-
+                    <dx-column
+                      data-field="comments"
+                      caption="Public notes"
+                      :visible="true"
+                      :width="120"
+                    />
                     <dx-column
                       data-field="blockClassName"
                       caption="Block Class"
                       :visible="false"
                     />
                     <dx-column
-                      :visible="true"
+                      :visible="false"
                       data-field="blockClass1"
                     >
                       <dx-lookup
@@ -311,15 +313,71 @@
                     <dx-column
                       data-field="nextAction"
                       caption="Next Action"
-                      :visible="true"
+                      :visible="false"
+                      :allow-editing="false"
                     />
                     <dx-column
                       data-field="steamStatus"
                       :visible="false"
+                      :allow-editing="false"
                     />
                     <dx-column
                       data-field="inCategoryDateCounter"
                       caption="Pending Scrap Action"
+                      :visible="false"
+                      :allow-editing="false"
+                    />
+                    <dx-column
+                      data-field="actionNote"
+                      :visible="false"
+                    />
+
+                    <dx-column
+                      data-field="subBucketID"
+                      caption="Sub Bucket"
+                      :visible="false"
+                    >
+                      <dx-lookup
+                        :data-source="[{ID:null,Name:'Unpickable'},{ID:'reconcile',Name:'Reconcile'}]"
+                        value-expr="ID"
+                        display-expr="Name"
+                      />
+                    </dx-column>
+                    <dx-column
+                      data-field="category"
+                      :visible="false"
+                    >
+                      <dx-lookup
+                        :data-source="npiBuckets"
+                        value-expr="id"
+                        display-expr="bucket"
+                      />
+                    </dx-column>
+                    <dx-column
+                      data-field="donateStatus"
+                      caption="Donation Status"
+                      :visible="false"
+                    >
+                      <dx-lookup
+                        :data-source="[{id:null,name:'QA Approved'},{id:'2',name:'Pickup Coordinated'},{id:'3',name:'Pickup Complete'}]"
+                        value-expr="id"
+                        display-expr="name"
+                      />
+                    </dx-column>
+
+                    <dx-column
+                      data-field="donatePickup"
+                      :visible="false"
+                    >
+                      <dx-lookup
+                        :data-source="[{id:null,name:'No'},{id:'yes',name:'Yes'}]"
+                        value-expr="id"
+                        display-expr="name"
+                      />
+                    </dx-column>
+                    <dx-column
+                      data-field="dispositionDeadline"
+                      data-type="date"
                       :visible="false"
                     />
                     <dx-column
@@ -327,20 +385,7 @@
                       caption="Owner"
                       :visible="true"
                     />
-                    <dx-column
-                      data-field="actionNote"
-                      :visible="false"
-                    />
-                    <dx-column
-                      data-field="comments"
-                      caption="Public notes"
-                      :visible="true"
-                    />
-                    <dx-column
-                      :buttons="editButtons"
-                      type="buttons"
-                      caption="Actions"
-                    />
+                    >
                     <dx-column
                       data-field="bucketID"
                       caption="Bucket"
@@ -354,21 +399,25 @@
                     </dx-column>
                     <dx-column
                       data-field="scrapType"
-                      :visible="false"
+                      :visible="isScrapTypeVisible"
                       :allow-clearing="true"
                     >
                       <dx-lookup :data-source="scrapTypes" />
                     </dx-column>
                     <dx-column
-                      data-field="category"
+                      cell-template="EditCell"
+                      caption=""
+                      :fixed="true"
+                      :width="50"
+                      fixed-position="right"
+                    />
+                    <dx-column
+                      data-field="swifferCategory"
                       :visible="false"
-                    >
-                      <dx-lookup
-                        :data-source="npiBuckets"
-                        value-expr="id"
-                        display-expr="bucket"
-                      />
-                    </dx-column>
+                    />
+                    <template #EditCell="{data: cellData}">
+                      <edit-form :cell-data="cellData" />
+                    </template>
                     <template #DaysCell="{ data: cellData }">
                       <days-cell :cell-data="cellData" />
                     </template>
@@ -376,19 +425,12 @@
                 </div>
               </v-container>
             </v-tab-item>
-            <!-- // End Pending Steam Creation Tab -->
           </v-tabs>
         </v-card>
         <v-card>
           <toast
             v-if="viewToast"
             :options="toastOptions"
-          />
-          <b-dialog
-            v-if="bucketDialog"
-            align-center
-            :selected-bucket-id="selectedBucketId"
-            :show-scrap-type="showScrapType"
           />
         </v-card>
       </v-container>
@@ -403,12 +445,10 @@
     DxExport,
     DxGroupPanel,
     DxScrolling,
+    DxSelection,
     DxGrouping,
     DxEditing,
     DxColumnChooser,
-    DxPopup,
-    DxPosition,
-    DxForm,
     DxHeaderFilter,
     DxFilterRow,
     DxFilterPanel,
@@ -416,31 +456,29 @@
     DxPager,
     DxPaging,
     DxLookup,
+    DxStateStoring,
   } from 'devextreme-vue/data-grid'
   import { exportDataGrid } from 'devextreme/excel_exporter'
-  import { DxItem } from 'devextreme-vue/form'
-  import { DxTextArea } from 'devextreme-vue/text-area'
   import ExcelJS from 'exceljs'
   import saveAs from 'file-saver'
   import { mapActions, mapState, mapGetters, mapMutations } from 'vuex'
   import DaysCell from '../../components/core/Days'
+  import query from 'devextreme/data/query'
+  const MILLISECONDS_IN_DAY = 1000 * 60 * 60 * 24
   export default {
     name: 'HomeGrid',
     inject: ['theme'],
     components: {
       DxDataGrid,
+      DxStateStoring,
       DxColumn,
-      DxTextArea,
       DxExport,
       DxGroupPanel,
       DxGrouping,
       DxScrolling,
+      DxSelection,
       DxColumnChooser,
-      DxItem,
       DxEditing,
-      DxPopup,
-      DxPosition,
-      DxForm,
       DxHeaderFilter,
       DxFilterRow,
       DxFilterPanel,
@@ -450,31 +488,41 @@
       DxLookup,
       DaysCell,
       Toast: () => import('@/components/core/Toast'),
-      BDialog: () => import('./Dialog'),
+      EditForm: () => import('./EditForm'),
+      BucketChange: () => import('./BucketChange'),
     },
 
     data () {
       return {
+        tab: 0,
+        popupVisible: false,
+        isPhoneVisible: true,
+        Quality_Notes: null,
+        QualityNoteOptions: {
+          height: 100,
+        },
+        Public_Notes: null,
+        publicNoteOptions: {
+          height: 100,
+        },
+        Owner: null,
+        SteamNumber: null,
+        dispositionDeadline: null,
         showScrapType: false,
         selectedBucketId: '0',
         isScrapTypeVisible: false,
+        isFormDisabled: false,
         bucketOptions: {
           onValueChanged: (e) => {
-            // this.bucketID = e.value
-            // this.selectedItem.value = e.value
-            if (e.value === '2') {
-              this.showScrapType = true
-            } else {
-              this.showScrapType = false
-            }
-            this.selectedBucketId = e.value
-            this.bucketDialog = true
-            this.dialogCLose1 = true
+            this.watchBucket = e.value
           },
+          value: '1',
         },
         selected: null,
         editForm: false,
         viewToast: false,
+        watchBucket: '1',
+        changes: {},
         toastOptions: { text: 'Update Success', type: 'success', time: 1000 },
         buckets: [
           { ID: '1', Name: 'Investigate' },
@@ -486,16 +534,15 @@
           { ID: '7', Name: 'Unpickable' },
         ],
         scrapTypes: ['', 'Heritage', 'Awesome'],
-        pager: 'pager',
         Create_pager: 'virtual',
         pageSizes: [5, 10, 20, 100],
-        dialog: false,
         vis: false,
         file: null,
         selectedSheet: null,
         sheetName: null,
         collection: [],
         selectedRows: [],
+        selectedRowKeys: [],
         columns: null,
         steamNumber: null,
         filterBuilderPopupPosition: {
@@ -512,13 +559,24 @@
       }
     },
     computed: {
-      ...mapState('npi', ['loading', 'npiConfigData', 'Category', 'Material', 'CategoryBucket', 'npiBuckets']),
+      ...mapState('npi', ['loading', 'npiConfigData', 'Category', 'Material', 'npiBuckets', 'CategoryBucket']),
       ...mapGetters('npi', [
         'rootCauseData',
         'rootCauseData',
         'filteredData',
         'token',
       ]),
+      oldValues: {
+        get () {
+          return this.$store.state.app.oldValues
+        },
+        set (value) {
+          this.setOldValues(value)
+        },
+      },
+      activeBtn () {
+        return this.selectedRowKeys.length === 1
+      },
       selectedItem: {
         get () {
           return this.$store.state.app.selectedItem
@@ -548,12 +606,36 @@
           this.toggleBucketDialog(value)
         },
       },
-      dialogCLose1: {
+      selectedRowObject: {
         get () {
-          return this.$store.state.app.dialogCLose
+          return this.$store.state.app.selectedRowObject
         },
         set (value) {
-          this.setdialogCLose(value)
+          this.setSelectedRowObject(value)
+        },
+      },
+      selectedRowsData: {
+        get () {
+          return this.$store.state.app.selectedRowsData
+        },
+        set (value) {
+          this.setSelectedRowsData(value)
+        },
+      },
+      dialog: {
+        get () {
+          return this.$store.state.app.dialog
+        },
+        set (value) {
+          this.setDialog(value)
+        },
+      },
+      pager: {
+        get () {
+          return this.$store.state.app.pager
+        },
+        set (value) {
+          this.setPager(value)
         },
       },
       sheets () {
@@ -582,9 +664,11 @@
         } catch (error) {}
         return result
       },
-      Unpickable_filter () {
+      Base_filter () {
         const response = []
         response.push(['bucketID', '=', '7']) // Base Filter
+        response.push('and')
+        response.push(['subBucketID', 'noneof', ['reconcile']])
         // IF Category Filter is applied
         if (this.Category) {
           response.push('and')
@@ -629,6 +713,14 @@
     },
 
     watch: {
+      watchBucket (e) {
+        if (e === '2') {
+          this.showScrapType = true
+        } else {
+          this.showScrapType = false
+        }
+        this.bucketOptions.value = e
+      },
       groupedBy (item) {
         this.options.groupBy = [item]
       },
@@ -642,24 +734,104 @@
 
     methods: {
       ...mapMutations('npi', ['setgroupedBy', 'setNPIData']),
-      ...mapMutations('app', ['toggleBucketDialog', 'setSelectedItem', 'setdialogCLose']),
+      ...mapMutations('app', ['toggleBucketDialog', 'setSelectedItem', 'setDialog', 'setSelectedRowsData', 'setSelectedRowObject', 'setOldValues', 'setPager']),
       ...mapActions('npi', ['getNPIData', 'updateNPI', 'getNPIMaster']),
+      onToolbarPreparing (e) {
+        const toolbarItems = e.toolbarOptions.items
+        const dataGrid = e.component
+        // Adds a new item
+        toolbarItems.push({
+          widget: 'dxButton',
+          options: {
+            icon: 'clearformat',
+            onClick: function () {
+              localStorage.removeItem('unpickable')
+              window.location.reload()
+            },
+            hint: 'Clear Saved Filter',
+          },
+          location: 'after',
+        })
+        toolbarItems.push({
+          widget: 'dxButton',
+          options: {
+            icon: 'refresh',
+            onClick: function () {
+              dataGrid.refresh()
+              dataGrid.repaint()
+            },
+            hint: 'Reload Table',
+          },
+          location: 'after',
+        })
+      },
+      clearSaved (item) {
+        localStorage.removeItem(item)
+        window.location.reload()
+      },
+      calculateStatistics () {
+        this.dataGrid.getSelectedRowsData().then(rowData => {
+          var commonDuration = 0
+
+          for (var i = 0; i < rowData.length; i++) {
+            commonDuration += rowData[i].Task_Due_Date - rowData[i].Task_Start_Date
+          }
+          commonDuration = commonDuration / MILLISECONDS_IN_DAY
+          this.taskCount = rowData.length
+          this.peopleCount = query(rowData)
+            .groupBy('ResponsibleEmployee.Employee_Full_Name')
+            .toArray()
+            .length
+          this.avgDuration = Math.round(commonDuration / rowData.length) || 0
+        })
+      },
+
+      validateForm (e) {
+        e.component.validate()
+        console.log(e.component)
+      },
+      handlePropertyChange: function (e) {
+        console.log(e)
+        if (e.name === 'changedProperty') {
+          // handle the property change here
+        }
+      },
       checkScrap (e) {
         console.log(e)
       },
       echo (e) {
         console.log(e)
       },
-
+      selectionChangedEcho (e) {
+        console.log('selectionChanged', e)
+        this.selectedRowKeys = e.selectedRowKeys
+        this.selectedRowsData = e.selectedRowsData
+        this.oldValues = e.selectedRowsData[0]
+        if (this.selectedRowsData.length === 1) {
+          this.setSelectedRowObject(e.selectedRowsData[0])
+        } else {
+          this.selectedRowObject = {}
+        }
+      },
+      rowUpdatingEcho (e) {
+        console.log('rowUpdating', e)
+        this.updateEvent(e)
+      },
+      editingStartEcho (e) {
+        console.log('editingStart', e)
+      },
+      optionChangedEcho (e) {
+        console.log('optionChanged', e)
+      },
       onInitialized (e) {
+        console.log(e)
         this.dataGrid = e.component
       },
       onSelectionChanged () {
-        this.dataGrid.getSelectedRowsData().then((rowData) => {
-          this.collection = rowData
-          const data = rowData[0]
-          this.showSteamButton = !!data
-        })
+
+      },
+      startEditAction (e) {
+        console.log('startEditAction', e)
       },
       updateSteamNumbers () {
         console.log(this.selectedRows.length)
@@ -674,16 +846,15 @@
         this.getNPIData()
         this.getNPIMaster()
       },
-      getSelectedRowsData (e) {
-        this.dataGrid.getSelectedRowsData().then((rowData) => {
-          this.selectedRows = rowData
-        })
-      },
       updateEvent (event) {
         console.log(event)
         if (event.oldData.npiNumber) {
         } else {
           event.oldData.npiNumber = event.oldData.id
+        }
+        if (event.newData.actionNote) {
+        } else {
+          event.newData.actionNote = 'Unpickable'
         }
         console.log(event.oldData.npiNumber)
         const body = []
@@ -703,20 +874,24 @@
             if (response.ok) {
               return response.json()
             } else {
-              console.log(response)
+
             }
           })
           .then((response) => {
-            console.log(response)
+            if (response.response.status === 0) {
+              this.viewToast = true
+              setTimeout(() => {
+                this.viewToast = false
+              }, 3000)
+            } else {
+              this.viewToast = false
+            }
           })
           .catch((err) => {
             console.log(err)
           })
           .finally(() => {
-            this.viewToast = true
-            setTimeout(() => {
-              this.viewToast = false
-            }, 300)
+            this.dataGrid.refresh()
           })
       },
       onChange (event) {
@@ -786,12 +961,4 @@
       },
     },
   }
-  // document.body.style.zoom = '80%'
 </script>
-
-<style>
-.dx-overlay-wrapper.dx-datagrid-edit-popup.dx-popup-wrapper.dx-overlay-modal.dx-overlay-shader {
-  z-index: 200 !important;
-};
-
-</style>
